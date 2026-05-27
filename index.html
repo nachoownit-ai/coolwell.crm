@@ -2158,7 +2158,7 @@
                 </thead>
                 <tbody>
                   ${clientesFiltrados.map(cliente => `
-                    <tr style="border-top: 1px solid var(--border); transition: background 0.2s ease; cursor: pointer;" onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background='transparent';">
+                    <tr style="border-top: 1px solid var(--border); transition: background 0.2s ease; cursor: pointer;" onclick="app.verDetallesCliente('${cliente.id}')" onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background='transparent';">
                       <td style="padding: 16px; font-weight: 600; color: var(--text);">
                         <div style="display: flex; align-items: center; gap: 10px;">
                           ${cliente.logo ? `<img src="${cliente.logo}" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover;">` : `<div style="width: 32px; height: 32px; background: ${tiposColor[cliente.tipo] || '#3B82F6'}; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">🏢</div>`}
@@ -2313,11 +2313,14 @@
                 tipo: d.tipoCapta || 'Residencial',
                 contacto: d.resumen || '',
                 ciudad: d.ciudad || '',
-                ultimoContacto: d.ultimoContacto || ''
+                ultimoContacto: d.ultimoContacto || '',
+                contactoHumano: d.contactoHumano || '',
+                enfado: d.enfado || '',
+                urgencia: d.urgencia || ''
               }));
               this.saveDB();
               this.renderClientes();
-              alert('✓ Datos sincronizados desde Google Sheet');
+              alert('✓ Datos sincronizados desde Google Sheet (' + datos.length + ' clientes)');
             }
           })
           .catch(error => {
@@ -2328,6 +2331,112 @@
             btn.innerHTML = textoOriginal;
             btn.disabled = false;
           });
+      },
+
+      verDetallesCliente(id) {
+        const cliente = (db.clientes || []).find(c => c.id === id);
+        if (!cliente) return;
+
+        const tiposColor = {
+          'Residencial': '#3B82F6',
+          'Comercial': '#F97316',
+          'Industrial': '#A855F7',
+          'Oficina': '#10B981'
+        };
+
+        const html = `
+          <div style="max-height: 80vh; overflow-y: auto;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+              <!-- COLUMNA 1: Info principal -->
+              <div>
+                <div style="font-size: 14px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Cliente</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 16px;">${cliente.nombre || 'Sin nombre'}</div>
+
+                <div style="background: var(--bg-light); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                  <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <span style="background: ${tiposColor[cliente.tipo] || '#3B82F6'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                      ${cliente.tipo || 'N/A'}
+                    </span>
+                  </div>
+                  <div style="font-size: 13px; color: var(--text); line-height: 1.6;">
+                    <div style="margin-bottom: 8px;"><strong>📱 Teléfono:</strong> ${cliente.telefono || '—'}</div>
+                    <div style="margin-bottom: 8px;"><strong>📧 Email:</strong> ${cliente.email || '—'}</div>
+                    <div style="margin-bottom: 8px;"><strong>👤 Contacto:</strong> ${cliente.contacto || '—'}</div>
+                    <div><strong>📍 Ciudad:</strong> ${cliente.ciudad || '—'}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- COLUMNA 2: Datos adicionales -->
+              <div>
+                <div style="background: #FFF3CD; padding: 16px; border-radius: 8px; border-left: 4px solid #FFC107; margin-bottom: 16px;">
+                  <div style="font-size: 14px; font-weight: 600; color: #856404; margin-bottom: 12px;">📊 Datos Adicionales</div>
+                  <div style="font-size: 13px; color: #856404; line-height: 1.8;">
+                    <div style="margin-bottom: 8px;">
+                      <strong>📅 Último Contacto:</strong><br>
+                      ${cliente.ultimoContacto || '—'}
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                      <strong>👥 Contacto Humano:</strong><br>
+                      <span style="background: ${cliente.contactoHumano === 'Sí' || cliente.contactoHumano === 'SI' ? '#D4EDDA' : '#F8D7DA'}; color: ${cliente.contactoHumano === 'Sí' || cliente.contactoHumano === 'SI' ? '#155724' : '#721C24'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                        ${cliente.contactoHumano || '—'}
+                      </span>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                      <strong>😠 Nivel de Enfado:</strong><br>
+                      <span style="background: ${cliente.enfado === 'Alto' ? '#F8D7DA' : cliente.enfado === 'Medio' ? '#FFF3CD' : '#D4EDDA'}; color: ${cliente.enfado === 'Alto' ? '#721C24' : cliente.enfado === 'Medio' ? '#856404' : '#155724'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                        ${cliente.enfado || '—'}
+                      </span>
+                    </div>
+                    <div>
+                      <strong>🚨 Urgencia:</strong><br>
+                      <span style="background: ${cliente.urgencia === 'Alta' ? '#F8D7DA' : cliente.urgencia === 'Media' ? '#FFF3CD' : '#D4EDDA'}; color: ${cliente.urgencia === 'Alta' ? '#721C24' : cliente.urgencia === 'Media' ? '#856404' : '#155724'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                        ${cliente.urgencia || '—'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Crear modal temporal
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.zIndex = '9999';
+        modal.onclick = (e) => {
+          if (e.target === modal) modal.remove();
+        };
+
+        const content = document.createElement('div');
+        content.className = 'modal';
+        content.style.width = '90%';
+        content.style.maxWidth = '800px';
+        content.style.maxHeight = '90vh';
+        content.style.overflow = 'auto';
+        content.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+            <h2 style="margin: 0; font-size: 24px; font-weight: 700;">${cliente.nombre}</h2>
+            <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);" onclick="this.closest('.modal-overlay').remove()">✕</button>
+          </div>
+          ${html}
+          <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <button class="btn btn-secondary" style="flex: 1;" onclick="this.closest('.modal-overlay').remove()">Cerrar</button>
+          </div>
+        `;
+
+        modal.appendChild(content);
+        document.body.appendChild(modal);
       },
 
 renderServicios(servicioSeleccionado = null) {
