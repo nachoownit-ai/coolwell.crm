@@ -1248,7 +1248,7 @@
           <div class="nav-item active" onclick="app.go('dashboard')">Dashboard</div>
           <div class="nav-item" onclick="app.go('partes')">Partes Técnicos</div>
           <div class="nav-item" onclick="app.go('tecnicos')">Técnicos</div>
-          <div class="nav-item" onclick="app.go('clientes')">AGENTES IA</div>
+          <div class="nav-item" onclick="app.go('clientes')">Clientes</div>
           <div class="nav-item" onclick="app.go('repuestos')">Repuestos</div>
           <div class="nav-item" onclick="app.go('calendario')">Calendario</div>
           <div class="nav-item" onclick="app.go('reportes')">Reportes</div>
@@ -1475,13 +1475,9 @@
           document.getElementById('page-subtitle').textContent = 'Gestión del equipo técnico y productividad';
           this.renderTecnicos();
         } else if (page === 'clientes') {
-          document.getElementById('page-title').textContent = 'AGENTES IA';
+          document.getElementById('page-title').textContent = 'Clientes';
           document.getElementById('page-subtitle').textContent = 'Gestión de clientes y datos de contacto';
           this.renderClientes();
-        } else if (page === 'servicios') {
-          document.getElementById('page-title').textContent = 'Servicios';
-          document.getElementById('page-subtitle').textContent = 'Catálogo de servicios disponibles';
-          this.renderServicios();
         } else if (page === 'repuestos') {
           document.getElementById('page-title').textContent = 'Repuestos';
           document.getElementById('page-subtitle').textContent = 'Gestión de piezas y materiales';
@@ -1498,11 +1494,12 @@
       },
 
       renderDashboard() {
-        const total = db.partes.length;
-        const enviados = db.partes.filter(p => p.estado === 'Enviado').length;
-        const agendados = db.partes.filter(p => p.estado === 'Agendado').length;
-        const encurso = db.partes.filter(p => p.estado === 'En curso').length;
-        const finalizados = db.partes.filter(p => p.estado === 'Finalizado').length;
+        const partes = db.partes || [];
+        const total = partes.length;
+        const enviados = partes.filter(p => p && p.estado === 'Enviado').length;
+        const agendados = partes.filter(p => p && p.estado === 'Agendado').length;
+        const encurso = partes.filter(p => p && p.estado === 'En curso').length;
+        const finalizados = partes.filter(p => p && p.estado === 'Finalizado').length;
 
         let html = `
           <div class="stats-grid">
@@ -1550,17 +1547,25 @@
                   </tr>
                 </thead>
                 <tbody>
-                  ${db.partes.slice(0, 10).map(p => `
+                  ${partes.slice(0, 10).map(p => `
                     <tr>
-                      <td><strong>#${p.id.slice(0, 6).toUpperCase()}</strong></td>
-                      <td>${p.cliente}</td>
-                      <td>${p.modelo}</td>
-                      <td><span class="status-badge status-${p.estado.toLowerCase().replace(' ', '')}">${p.estado}</span></td>
+                      <td><strong>#${(p.id || '').slice(0, 6).toUpperCase()}</strong></td>
+                      <td>${p.cliente || 'N/A'}</td>
+                      <td>${p.modelo || 'N/A'}</td>
+                      <td><span class="status-badge status-${(p.estado || 'pendiente').toLowerCase().replace(' ', '')}">${p.estado || 'Pendiente'}</span></td>
                       <td><button class="btn btn-secondary btn-small" onclick="app.verParte('${p.id}')">Ver Detalles</button></td>
                     </tr>
                   `).join('')}
                 </tbody>
               </table>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="card" style="text-align: center; padding: 40px;">
+              <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+              <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No hay partes registrados</div>
+              <div style="color: var(--text-light); margin-bottom: 20px;">Comienza creando tu primer parte técnico o cargando datos de demostración</div>
             </div>
           `;
         }
@@ -2091,127 +2096,95 @@
 
       // ========== GESTIÓN DE CLIENTES ==========
 
-
-      // Sincronizar clientes desde Google Sheet
-      sincronizarDesdeGoogle() {
-        const urlScript = 'https://script.google.com/macros/s/AKfycbx5GifGmJJ9--U61Ox4KJyUBF2S789c4mR6k8WQZk9rJlV9n-e70cCyypoQNmfU6JZc/exec';
-        
-        fetch(urlScript)
-          .then(r => r.json())
-          .then(agentes => {
-            let agregados = 0;
-            let actualizados = 0;
-
-            agentes.forEach(agente => {
-              const existente = db.clientes.find(c => 
-                c.nombre === agente.nombre && 
-                (c.telefono === agente.telefono || c.telefono === '')
-              );
-
-              if (existente) {
-                // Actualizar
-                existente.telefono = agente.telefono;
-                existente.contacto = agente.apellidos;
-                existente.notas = `${agente.resumen}\n\nÚltimo contacto: ${agente.ultimoContacto}`;
-                actualizados++;
-              } else {
-                // Agregar nuevo
-                db.clientes.push({
-                  id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-                  nombre: agente.nombre,
-                  email: '',
-                  telefono: agente.telefono,
-                  direccion: '',
-                  ciudad: '',
-                  cp: '',
-                  tipo: agente.tipoCapta || 'Residencial',
-                  contacto: agente.apellidos,
-                  notas: `${agente.resumen}\n\nÚltimo contacto: ${agente.ultimoContacto}`,
-                  logo: ''
-                });
-                agregados++;
-              }
-            });
-
-            this.saveDB();
-            this.renderClientes();
-            
-            const msg = `✅ Sincronización completada\n✨ Agregados: ${agregados}\n🔄 Actualizados: ${actualizados}`;
-            alert(msg);
-          })
-          .catch(e => {
-            alert('❌ Error sincronizando: ' + e.message);
-            console.error(e);
-          });
-      },
-
       renderClientes(filtro = '') {
+        const tiposColor = {
+          'Residencial': '#3B82F6',
+          'Comercial': '#F97316',
+          'Industrial': '#A855F7',
+          'Oficina': '#10B981'
+        };
+
+        let clientesFiltrados = db.clientes || [];
+        if (filtro) {
+          const busqueda = filtro.toLowerCase();
+          clientesFiltrados = clientesFiltrados.filter(c => {
+            return (c && (
+              (c.nombre || '').toLowerCase().includes(busqueda) ||
+              (c.email || '').toLowerCase().includes(busqueda) ||
+              (c.telefono || '').includes(busqueda) ||
+              (c.ciudad || '').toLowerCase().includes(busqueda)
+            ));
+          });
+        }
+
         let html = `
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <div style="display: flex; gap: 12px;"><button class="btn" onclick="app.nuevoCliente()">+ Nuevo Cliente</button><button class="btn btn-secondary" onclick="app.sincronizarDesdeGoogle()">🔄 Sincronizar Google Sheet</button></div>
-          </div>
+          <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div class="card-title" style="margin-bottom: 0;">Clientes (${clientesFiltrados.length})</div>
+              <button class="btn btn-secondary" onclick="app.sincronizarDesdeGoogle()" style="margin: 0;">🔄 Sincronizar</button>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+              <input type="text" class="search-input" id="search-clientes" placeholder="🔍 Buscar cliente..."
+                onkeyup="app.renderClientes(this.value)"
+                style="flex: 1; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px;">
+            </div>
         `;
 
-        if (db.clientes.length === 0) {
+        if (clientesFiltrados.length === 0) {
           html += `
-            <div class="empty-state">
-              <div class="empty-state-icon">👥</div>
-              <div class="empty-state-text">No hay clientes registrados</div>
-              <div style="margin-top: 12px;">
-                <button class="btn" onclick="app.nuevoCliente()">Crear primer cliente</button>
+            <div style="text-align: center; padding: 40px 20px; color: var(--text-light);">
+              <div style="font-size: 48px; margin-bottom: 12px;">📋</div>
+              <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">No hay clientes</div>
+              <div style="margin-bottom: 20px; font-size: 14px;">
+                ${db.clientes.length > 0 ? 'No coincide con tu búsqueda' : 'Sincroniza con tu Google Sheet para ver los clientes'}
               </div>
+              <button class="btn btn-secondary" onclick="app.sincronizarDesdeGoogle()">Sincronizar desde Google Sheet</button>
             </div>
           `;
         } else {
-          let clientesFiltrados = db.clientes;
-
-          if (filtro) {
-            const busqueda = filtro.toLowerCase();
-            clientesFiltrados = db.clientes.filter(c => {
-              return (c.nombre || '').toLowerCase().includes(busqueda) ||
-                (c.email || '').toLowerCase().includes(busqueda) ||
-                (c.telefono || '').includes(busqueda) ||
-                (c.ciudad || '').toLowerCase().includes(busqueda);
-            });
-          }
-
-          html += `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">`;
-
-          clientesFiltrados.forEach(cliente => {
-            const tiposColor = {
-              'Residencial': '#3B82F6',
-              'Comercial': '#F97316',
-              'Industrial': '#A855F7',
-              'Oficina': '#10B981'
-            };
-
-            html += `
-              <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div style="background: linear-gradient(135deg, ${tiposColor[cliente.tipo] || '#3B82F6'} 0%, ${tiposColor[cliente.tipo] || '#3B82F6'}dd 100%); padding: 16px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center;">
-                  ${cliente.logo ? `<img src="${cliente.logo}" style="max-width: 100%; max-height: 100px; object-fit: contain;">` : `<div style="font-size: 48px;">🏢</div>`}
-                </div>
-                <div style="padding: 16px;">
-                  <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px;">${cliente.nombre}</div>
-                  <div style="display: inline-block; background: ${tiposColor[cliente.tipo] || '#3B82F6'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-bottom: 12px;">
-                    ${cliente.tipo}
-                  </div>
-                  <div style="font-size: 13px; color: var(--text-light); margin-bottom: 12px;">
-                    <div>👤 ${cliente.contacto || 'N/A'}</div>
-                    <div>📧 ${cliente.email || 'N/A'}</div>
-                    <div>📱 ${cliente.telefono || 'N/A'}</div>
-                  </div>
-                  <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-sm" onclick="app.editarCliente('${cliente.id}')" style="flex: 1; background: var(--accent); color: white; padding: 8px;">Editar</button>
-                    <button class="btn btn-sm" style="background: #EF4444; color: white; padding: 8px;" onclick="if(confirm('¿Eliminar?')) { app.eliminarCliente('${cliente.id}'); app.renderClientes(); }">🗑️</button>
-                  </div>
-                </div>
-              </div>
-            `;
-          });
-
-          html += `</div>`;
+          html += `
+            <div style="overflow-x: auto; border-radius: 8px; border: 1px solid var(--border);">
+              <table class="table" style="margin: 0; width: 100%;">
+                <thead>
+                  <tr style="background: var(--bg-light);">
+                    <th style="padding: 16px; text-align: left; font-weight: 600; color: var(--text); width: 25%;">Cliente</th>
+                    <th style="padding: 16px; text-align: left; font-weight: 600; color: var(--text); width: 15%;">Teléfono</th>
+                    <th style="padding: 16px; text-align: left; font-weight: 600; color: var(--text); width: 15%;">Email</th>
+                    <th style="padding: 16px; text-align: left; font-weight: 600; color: var(--text); width: 15%;">Tipo</th>
+                    <th style="padding: 16px; text-align: left; font-weight: 600; color: var(--text); width: 15%;">Contacto</th>
+                    <th style="padding: 16px; text-align: center; font-weight: 600; color: var(--text); width: 15%;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${clientesFiltrados.map(cliente => `
+                    <tr style="border-top: 1px solid var(--border); transition: background 0.2s ease; cursor: pointer;" onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background='transparent';">
+                      <td style="padding: 16px; font-weight: 600; color: var(--text);">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                          ${cliente.logo ? `<img src="${cliente.logo}" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover;">` : `<div style="width: 32px; height: 32px; background: ${tiposColor[cliente.tipo] || '#3B82F6'}; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">🏢</div>`}
+                          <span>${cliente.nombre || 'Sin nombre'}</span>
+                        </div>
+                      </td>
+                      <td style="padding: 16px; color: var(--text);">${cliente.telefono || '—'}</td>
+                      <td style="padding: 16px; color: var(--text);">${cliente.email ? `<a href="mailto:${cliente.email}" style="color: var(--accent); text-decoration: none;">${cliente.email}</a>` : '—'}</td>
+                      <td style="padding: 16px;">
+                        <span style="background: ${tiposColor[cliente.tipo] || '#3B82F6'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                          ${cliente.tipo || 'N/A'}
+                        </span>
+                      </td>
+                      <td style="padding: 16px; color: var(--text);">${cliente.contacto || '—'}</td>
+                      <td style="padding: 16px; text-align: center; color: var(--text-light);">
+                        📌 ${cliente.ciudad || 'Sin ciudad'}
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
         }
 
+        html += `</div>`;
         document.getElementById('page-body').innerHTML = html;
       },
 
@@ -2317,6 +2290,44 @@
       eliminarCliente(id) {
         db.clientes = db.clientes.filter(c => c.id !== id);
         this.saveDB();
+      },
+
+      sincronizarDesdeGoogle() {
+        const googleSheetURL = 'https://script.google.com/macros/s/AKfycbx5GifGmJJ9--U61Ox4KJyUBF2S789c4mR6k8WQZk9rJlV9n-e70cCyypoQNmfU6JZc/exec';
+
+        const btn = event.target;
+        const textoOriginal = btn.innerHTML;
+        btn.innerHTML = '⏳ Sincronizando...';
+        btn.disabled = true;
+
+        fetch(googleSheetURL)
+          .then(response => response.json())
+          .then(datos => {
+            if (Array.isArray(datos)) {
+              db.clientes = datos.map(d => ({
+                id: d.id || 'cli_' + Date.now() + Math.random(),
+                nombre: d.nombre || '',
+                apellidos: d.apellidos || '',
+                telefono: d.telefono || '',
+                email: d.email || '',
+                tipo: d.tipoCapta || 'Residencial',
+                contacto: d.resumen || '',
+                ciudad: d.ciudad || '',
+                ultimoContacto: d.ultimoContacto || ''
+              }));
+              this.saveDB();
+              this.renderClientes();
+              alert('✓ Datos sincronizados desde Google Sheet');
+            }
+          })
+          .catch(error => {
+            console.error('Error sincronizando:', error);
+            alert('❌ Error al sincronizar. Verifica tu conexión.');
+          })
+          .finally(() => {
+            btn.innerHTML = textoOriginal;
+            btn.disabled = false;
+          });
       },
 
 renderServicios(servicioSeleccionado = null) {
@@ -3768,39 +3779,53 @@ renderServicios(servicioSeleccionado = null) {
         const citas = [];
         (db.partes || []).forEach(p => {
           try {
-            const hitos = p.hitos || [];
-            const hito = hitos[1];
-            if (hito && hito.data && hito.data.fecha) {
-              const fecha = hito.data.fecha; // YYYY-MM-DD
-              const [y, m, d] = fecha.split('-');
-              if (parseInt(y) === año && parseInt(m) === mes + 1) {
-                citas.push({
-                  parteId: p.id || '',
-                  cliente: p.cliente || '',
-                  modelo: p.modelo || '',
-                  estado: p.estado || '',
-                  fecha,
-                  hora: (hito.data && hito.data.hora) || '09:00',
-                  dia: parseInt(d),
-                  tecnico: p.tecnico || 'Sin asignar'
-                });
-              }
+            if (!p || !p.hitos || !Array.isArray(p.hitos)) return;
+
+            const hito = p.hitos[1]; // Segundo hito = cita programada
+            if (!hito || !hito.data) return;
+
+            const fecha = hito.data.fecha; // Esperar formato YYYY-MM-DD
+            if (!fecha) return;
+
+            const fechaParts = fecha.split('-');
+            if (fechaParts.length !== 3) return;
+
+            const y = parseInt(fechaParts[0], 10);
+            const m = parseInt(fechaParts[1], 10);
+            const d = parseInt(fechaParts[2], 10);
+
+            if (isNaN(y) || isNaN(m) || isNaN(d)) return;
+
+            // Comparar mes y año
+            if (y === año && m === mes + 1) {
+              citas.push({
+                parteId: p.id || '',
+                cliente: p.cliente || '',
+                modelo: p.modelo || '',
+                estado: p.estado || '',
+                fecha,
+                hora: (hito.data && hito.data.hora) || '09:00',
+                dia: d,
+                tecnico: p.tecnico || 'Sin asignar'
+              });
             }
-          } catch(e) {}
+          } catch(e) {
+            console.warn('Error procesando hito de parte:', e);
+          }
         });
 
         // Aplicar filtros
         let citasFiltradas = citas;
-        if (db.calendario.filtroCliente) {
+        if (db.calendario && db.calendario.filtroCliente) {
           citasFiltradas = citasFiltradas.filter(c =>
-            c.cliente.toLowerCase().includes(db.calendario.filtroCliente.toLowerCase())
+            c && c.cliente && c.cliente.toLowerCase().includes(db.calendario.filtroCliente.toLowerCase())
           );
         }
-        if (db.calendario.filtroEstado) {
-          citasFiltradas = citasFiltradas.filter(c => c.estado === db.calendario.filtroEstado);
+        if (db.calendario && db.calendario.filtroEstado) {
+          citasFiltradas = citasFiltradas.filter(c => c && c.estado === db.calendario.filtroEstado);
         }
-        if (db.calendario.filtroTecnico) {
-          citasFiltradas = citasFiltradas.filter(c => c.tecnico === db.calendario.filtroTecnico);
+        if (db.calendario && db.calendario.filtroTecnico) {
+          citasFiltradas = citasFiltradas.filter(c => c && c.tecnico === db.calendario.filtroTecnico);
         }
 
         // Contar por estado
@@ -3822,9 +3847,10 @@ renderServicios(servicioSeleccionado = null) {
         const hoy = new Date();
         const esHoy = hoy.getMonth() === mes && hoy.getFullYear() === año;
 
-        // Obtener técnicos únicos
-        const tecnicos = ['Todos', ...new Set(db.partes.map(p => p.tecnico || 'Sin asignar').filter(t => t))];
-        const clientes = ['Todos', ...new Set(db.partes.map(p => p.cliente).filter(c => c))];
+        // Obtener técnicos y clientes únicos
+        const partes = db.partes || [];
+        const tecnicos = ['Todos', ...new Set(partes.map(p => p && p.tecnico ? p.tecnico : 'Sin asignar').filter(t => t))];
+        const clientes = ['Todos', ...new Set(partes.map(p => p && p.cliente ? p.cliente : '').filter(c => c))];
 
         let html = `
           <div class="stats-grid">
