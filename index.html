@@ -1248,7 +1248,7 @@
           <div class="nav-item active" onclick="app.go('dashboard')">Dashboard</div>
           <div class="nav-item" onclick="app.go('partes')">Partes Técnicos</div>
           <div class="nav-item" onclick="app.go('tecnicos')">Técnicos</div>
-          <div class="nav-item" onclick="app.go('clientes')">Clientes</div>
+          <div class="nav-item" onclick="app.go('clientes')">AGENTES IA</div>
           <div class="nav-item" onclick="app.go('repuestos')">Repuestos</div>
           <div class="nav-item" onclick="app.go('calendario')">Calendario</div>
           <div class="nav-item" onclick="app.go('reportes')">Reportes</div>
@@ -1475,7 +1475,7 @@
           document.getElementById('page-subtitle').textContent = 'Gestión del equipo técnico y productividad';
           this.renderTecnicos();
         } else if (page === 'clientes') {
-          document.getElementById('page-title').textContent = 'Clientes';
+          document.getElementById('page-title').textContent = 'AGENTES IA';
           document.getElementById('page-subtitle').textContent = 'Gestión de clientes y datos de contacto';
           this.renderClientes();
         } else if (page === 'servicios') {
@@ -2091,10 +2091,64 @@
 
       // ========== GESTIÓN DE CLIENTES ==========
 
+
+      // Sincronizar clientes desde Google Sheet
+      sincronizarDesdeGoogle() {
+        const urlScript = 'https://script.google.com/macros/s/AKfycbx5GifGmJJ9--U61Ox4KJyUBF2S789c4mR6k8WQZk9rJlV9n-e70cCyypoQNmfU6JZc/exec';
+        
+        fetch(urlScript)
+          .then(r => r.json())
+          .then(agentes => {
+            let agregados = 0;
+            let actualizados = 0;
+
+            agentes.forEach(agente => {
+              const existente = db.clientes.find(c => 
+                c.nombre === agente.nombre && 
+                (c.telefono === agente.telefono || c.telefono === '')
+              );
+
+              if (existente) {
+                // Actualizar
+                existente.telefono = agente.telefono;
+                existente.contacto = agente.apellidos;
+                existente.notas = `${agente.resumen}\n\nÚltimo contacto: ${agente.ultimoContacto}`;
+                actualizados++;
+              } else {
+                // Agregar nuevo
+                db.clientes.push({
+                  id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+                  nombre: agente.nombre,
+                  email: '',
+                  telefono: agente.telefono,
+                  direccion: '',
+                  ciudad: '',
+                  cp: '',
+                  tipo: agente.tipoCapta || 'Residencial',
+                  contacto: agente.apellidos,
+                  notas: `${agente.resumen}\n\nÚltimo contacto: ${agente.ultimoContacto}`,
+                  logo: ''
+                });
+                agregados++;
+              }
+            });
+
+            this.saveDB();
+            this.renderClientes();
+            
+            const msg = `✅ Sincronización completada\n✨ Agregados: ${agregados}\n🔄 Actualizados: ${actualizados}`;
+            alert(msg);
+          })
+          .catch(e => {
+            alert('❌ Error sincronizando: ' + e.message);
+            console.error(e);
+          });
+      },
+
       renderClientes(filtro = '') {
         let html = `
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <button class="btn" onclick="app.nuevoCliente()">+ Nuevo Cliente</button>
+            <div style="display: flex; gap: 12px;"><button class="btn" onclick="app.nuevoCliente()">+ Nuevo Cliente</button><button class="btn btn-secondary" onclick="app.sincronizarDesdeGoogle()">🔄 Sincronizar Google Sheet</button></div>
           </div>
         `;
 
