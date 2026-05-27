@@ -2346,54 +2346,68 @@
 
         const html = `
           <div style="max-height: 80vh; overflow-y: auto;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
-              <!-- COLUMNA 1: Info principal -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+              <!-- COLUMNA 1: Información de Contacto -->
               <div>
-                <div style="font-size: 14px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Cliente</div>
-                <div style="font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 16px;">${cliente.nombre || 'Sin nombre'}</div>
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Tipo</div>
+                  <span style="background: ${tiposColor[cliente.tipo] || '#3B82F6'}; color: white; padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: 600; display: inline-block;">
+                    ${cliente.tipo || 'N/A'}
+                  </span>
+                </div>
 
-                <div style="background: var(--bg-light); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-                  <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <span style="background: ${tiposColor[cliente.tipo] || '#3B82F6'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
-                      ${cliente.tipo || 'N/A'}
-                    </span>
-                  </div>
-                  <div style="font-size: 13px; color: var(--text); line-height: 1.6;">
-                    <div style="margin-bottom: 8px;"><strong>📱 Teléfono:</strong> ${cliente.telefono || '—'}</div>
-                    <div style="margin-bottom: 8px;"><strong>📧 Email:</strong> ${cliente.email || '—'}</div>
-                    <div style="margin-bottom: 8px;"><strong>👤 Contacto:</strong> ${cliente.contacto || '—'}</div>
-                    <div><strong>📍 Ciudad:</strong> ${cliente.ciudad || '—'}</div>
-                  </div>
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Teléfono</div>
+                  <div style="font-size: 15px; color: var(--text); font-weight: 500;">${cliente.telefono || '—'}</div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Email</div>
+                  <div style="font-size: 15px; color: var(--text); font-weight: 500;">${cliente.email || '—'}</div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Contacto</div>
+                  <div style="font-size: 15px; color: var(--text); font-weight: 500;">${cliente.contacto || '—'}</div>
+                </div>
+
+                <div>
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Ciudad</div>
+                  <div style="font-size: 15px; color: var(--text); font-weight: 500;">${cliente.ciudad || '—'}</div>
                 </div>
               </div>
 
-              <!-- COLUMNA 2: Datos adicionales -->
+              <!-- COLUMNA 2: Datos Adicionales -->
               <div>
-                <div style="background: #FFF3CD; padding: 16px; border-radius: 8px; border-left: 4px solid #FFC107; margin-bottom: 16px;">
-                  <div style="font-size: 14px; font-weight: 600; color: #856404; margin-bottom: 12px;">📊 Datos Adicionales</div>
-                  <div style="font-size: 13px; color: #856404; line-height: 1.8;">
-                    <div style="margin-bottom: 8px;">
-                      <strong>📅 Último Contacto:</strong><br>
-                      ${cliente.ultimoContacto || '—'}
-                    </div>
-                    <div style="margin-bottom: 8px;">
-                      <strong>👥 Contacto Humano:</strong><br>
-                      <span style="background: ${cliente.contactoHumano === 'Sí' || cliente.contactoHumano === 'SI' ? '#D4EDDA' : '#F8D7DA'}; color: ${cliente.contactoHumano === 'Sí' || cliente.contactoHumano === 'SI' ? '#155724' : '#721C24'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                        ${cliente.contactoHumano || '—'}
-                      </span>
-                    </div>
-                    <div style="margin-bottom: 8px;">
-                      <strong>😠 Nivel de Enfado:</strong><br>
-                      <span style="background: ${cliente.enfado === 'Alto' ? '#F8D7DA' : cliente.enfado === 'Medio' ? '#FFF3CD' : '#D4EDDA'}; color: ${cliente.enfado === 'Alto' ? '#721C24' : cliente.enfado === 'Medio' ? '#856404' : '#155724'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                        ${cliente.enfado || '—'}
-                      </span>
-                    </div>
-                    <div>
-                      <strong>🚨 Urgencia:</strong><br>
-                      <span style="background: ${cliente.urgencia === 'Alta' ? '#F8D7DA' : cliente.urgencia === 'Media' ? '#FFF3CD' : '#D4EDDA'}; color: ${cliente.urgencia === 'Alta' ? '#721C24' : cliente.urgencia === 'Media' ? '#856404' : '#155724'}; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                        ${cliente.urgencia || '—'}
-                      </span>
-                    </div>
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Último Contacto</div>
+                  <div style="font-size: 15px; color: var(--text); font-weight: 500;">${cliente.ultimoContacto || '—'}</div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Contacto Humano</div>
+                  <div>
+                    <span style="background: ${cliente.contactoHumano === 'Sí' || cliente.contactoHumano === 'SI' ? '#E8F5E9' : '#FFEBEE'}; color: ${cliente.contactoHumano === 'Sí' || cliente.contactoHumano === 'SI' ? '#2E7D32' : '#C62828'}; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: 600;">
+                      ${cliente.contactoHumano || '—'}
+                    </span>
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Nivel de Enfado</div>
+                  <div>
+                    <span style="background: ${cliente.enfado === 'Alto' ? '#FFEBEE' : cliente.enfado === 'Medio' ? '#FFF3E0' : '#E8F5E9'}; color: ${cliente.enfado === 'Alto' ? '#C62828' : cliente.enfado === 'Medio' ? '#E65100' : '#2E7D32'}; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: 600;">
+                      ${cliente.enfado || '—'}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Urgencia</div>
+                  <div>
+                    <span style="background: ${cliente.urgencia === 'Alta' ? '#FFEBEE' : cliente.urgencia === 'Media' ? '#FFF3E0' : '#E8F5E9'}; color: ${cliente.urgencia === 'Alta' ? '#C62828' : cliente.urgencia === 'Media' ? '#E65100' : '#2E7D32'}; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: 600;">
+                      ${cliente.urgencia || '—'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2425,12 +2439,15 @@
         content.style.maxHeight = '90vh';
         content.style.overflow = 'auto';
         content.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
-            <h2 style="margin: 0; font-size: 24px; font-weight: 700;">${cliente.nombre}</h2>
-            <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light);" onclick="this.closest('.modal-overlay').remove()">✕</button>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border);">
+            <div>
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Cliente</div>
+              <h2 style="margin: 0; font-size: 32px; font-weight: 700; color: var(--text);">${cliente.nombre || 'Sin nombre'}</h2>
+            </div>
+            <button style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-light); padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" onclick="this.closest('.modal-overlay').remove()">×</button>
           </div>
           ${html}
-          <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+          <div style="display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);">
             <button class="btn btn-secondary" style="flex: 1;" onclick="this.closest('.modal-overlay').remove()">Cerrar</button>
           </div>
         `;
