@@ -1601,6 +1601,98 @@
     </div>
   </div>
 
+  <!-- MODAL CREAR/EDITAR PARTE (25 CAMPOS) -->
+  <div class="modal-overlay" id="modal-parte">
+    <div class="modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-title" id="modal-parte-title">Nuevo Parte</div>
+      <div class="modal-subtitle">Ingresa los 25 campos del parte técnico</div>
+      <input type="hidden" id="input-parte-id">
+
+      <div class="modal-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <!-- ROW 1 -->
+        <input type="text" id="input-parte-n-aviso" placeholder="1. Nº de aviso" required>
+        <input type="date" id="input-parte-f-compra" placeholder="2. F. Compra" required>
+
+        <!-- ROW 2 -->
+        <input type="text" id="input-parte-comprada-en" placeholder="3. Comprada en" style="grid-column: 1 / -1;">
+
+        <!-- ROW 3 -->
+        <input type="text" id="input-parte-sat" placeholder="4. SAT">
+        <input type="text" id="input-parte-marca" placeholder="5. MARCA">
+
+        <!-- ROW 4 -->
+        <input type="text" id="input-parte-modelo" placeholder="6. Modelo" style="grid-column: 1 / -1;">
+
+        <!-- ROW 5 -->
+        <input type="text" id="input-parte-n-serie-int" placeholder="7. Nº serie int.">
+        <input type="text" id="input-parte-n-serie-ext" placeholder="8. Nº serie ext.">
+
+        <!-- ROW 6 -->
+        <input type="date" id="input-parte-f-aviso" placeholder="9. F. Aviso">
+        <input type="date" id="input-parte-f-terminac" placeholder="10. F. Terminac">
+
+        <!-- ROW 7 -->
+        <input type="number" id="input-parte-dias-transcurr" placeholder="11. Días transcurridos" min="0">
+        <select id="input-parte-tecnico-asignado" style="">
+          <option value="">12. Técnico Asignado...</option>
+        </select>
+
+        <!-- ROW 8 -->
+        <input type="text" id="input-parte-contacto" placeholder="13. Persona contacto y Telf." style="grid-column: 1 / -1;">
+
+        <!-- ROW 9 -->
+        <input type="text" id="input-parte-direccion" placeholder="14. Dirección" style="grid-column: 1 / -1;">
+
+        <!-- ROW 10 -->
+        <textarea id="input-parte-comentarios" placeholder="15. Comentarios" style="grid-column: 1 / -1; height: 60px;"></textarea>
+
+        <!-- ROW 11 -->
+        <textarea id="input-parte-averia" placeholder="16. Avería" style="grid-column: 1 / -1; height: 60px;"></textarea>
+
+        <!-- ROW 12 -->
+        <input type="text" id="input-parte-doa" placeholder="17. DOA/EPIDEMI">
+        <select id="input-parte-repuesto">
+          <option value="">18. ¿Repuesto?</option>
+          <option value="S">Sí</option>
+          <option value="N">No</option>
+        </select>
+
+        <!-- ROW 13 -->
+        <input type="number" id="input-parte-m-obra" placeholder="19. M. Obra (€)" min="0" step="0.01">
+        <input type="number" id="input-parte-despl-km" placeholder="20. Despl. KM" min="0" step="0.01">
+
+        <!-- ROW 14 -->
+        <input type="number" id="input-parte-coste-repuesto" placeholder="21. Coste Repuesto (€)" min="0" step="0.01">
+        <input type="number" id="input-parte-coste-total" placeholder="22. Coste Total (€)" min="0" step="0.01" readonly>
+
+        <!-- ROW 15 -->
+        <select id="input-parte-facturado">
+          <option value="">23. ¿Facturado?</option>
+          <option value="S">Sí</option>
+          <option value="N">No</option>
+        </select>
+        <input type="text" id="input-parte-motivo" placeholder="24. Motivo">
+
+        <!-- ROW 16 -->
+        <select id="input-parte-imp-fact">
+          <option value="">25. Imp Fact</option>
+          <option value="S">Sí</option>
+          <option value="N">No</option>
+        </select>
+        <select id="input-parte-fact-sat">
+          <option value="">Fact. SAT Recibida</option>
+          <option value="S">Sí</option>
+          <option value="N">No</option>
+        </select>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" onclick="app.closeModal('modal-parte')">Cancelar</button>
+        <button class="btn" onclick="app.guardarParte()">Guardar Parte</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
@@ -1837,90 +1929,76 @@
         document.getElementById('page-body').innerHTML = html;
       },
 
-      renderPartes(filtro = '', estado = '') {
+      renderPartes(filtro = '') {
         let partesFiltrados = db.partes || [];
 
         // Filtrar por búsqueda
         if (filtro && filtro.trim()) {
           const term = filtro.toLowerCase();
           partesFiltrados = partesFiltrados.filter(p =>
-            (p.cliente || '').toLowerCase().includes(term) ||
+            (p.n_aviso || '').toLowerCase().includes(term) ||
             (p.modelo || '').toLowerCase().includes(term) ||
+            (p.marca || '').toLowerCase().includes(term) ||
+            (p.tecnico_nombre || '').toLowerCase().includes(term) ||
             (p.id || '').toLowerCase().includes(term)
           );
-        }
-
-        // Filtrar por estado
-        if (estado) {
-          partesFiltrados = partesFiltrados.filter(p => p.estado === estado);
         }
 
         let html = `
           <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-              <div class="card-title" style="margin-bottom: 0;">Listado de Partes</div>
+              <div class="card-title" style="margin-bottom: 0;">Gestión de Partes (${partesFiltrados.length})</div>
               <button class="btn" onclick="app.newParte()">+ Nuevo Parte</button>
             </div>
 
-            <div class="search-bar">
-              <input type="text" class="search-input" id="search-input" placeholder="Buscar por cliente, equipo o ID..."
-                onkeyup="app.renderPartes(this.value, document.querySelector('[data-filter-state]')?.getAttribute('data-filter-state') || '')">
-
-              <div class="filter-group">
-                <button class="filter-btn ${!estado ? 'active' : ''}" onclick="app.renderPartes(document.getElementById('search-input').value, '')">
-                  Todos (${db.partes.length})
-                </button>
-                <button class="filter-btn ${estado === 'Enviado' ? 'active' : ''}" onclick="app.renderPartes(document.getElementById('search-input').value, 'Enviado')" data-filter-state="Enviado">
-                  Enviados (${db.partes.filter(p => p.estado === 'Enviado').length})
-                </button>
-                <button class="filter-btn ${estado === 'Agendado' ? 'active' : ''}" onclick="app.renderPartes(document.getElementById('search-input').value, 'Agendado')" data-filter-state="Agendado">
-                  Agendados (${db.partes.filter(p => p.estado === 'Agendado').length})
-                </button>
-                <button class="filter-btn ${estado === 'En curso' ? 'active' : ''}" onclick="app.renderPartes(document.getElementById('search-input').value, 'En curso')" data-filter-state="En curso">
-                  En Curso (${db.partes.filter(p => p.estado === 'En curso').length})
-                </button>
-                <button class="filter-btn ${estado === 'Finalizado' ? 'active' : ''}" onclick="app.renderPartes(document.getElementById('search-input').value, 'Finalizado')" data-filter-state="Finalizado">
-                  Finalizados (${db.partes.filter(p => p.estado === 'Finalizado').length})
-                </button>
-              </div>
+            <div class="search-bar" style="margin-bottom: 20px;">
+              <input type="text" class="search-input" id="search-partes" placeholder="Buscar por nº aviso, marca, modelo, técnico..."
+                onkeyup="app.renderPartes(this.value)">
             </div>
 
             ${partesFiltrados.length === 0 ? `
               <div class="search-results">
-                ${db.partes.length === 0
-                  ? '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">No hay partes técnicos registrados</div></div>'
-                  : '<div class="search-results" style="color: var(--text); padding: 20px; text-align: center;">No se encontraron partes que coincidan con tu búsqueda</div>'
+                ${(db.partes || []).length === 0
+                  ? '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">No hay partes registrados. Haz click en "+ Nuevo Parte" para crear uno.</div></div>'
+                  : '<div style="padding: 20px; text-align: center; color: var(--text-light);">No se encontraron partes que coincidan con tu búsqueda</div>'
                 }
               </div>
             ` : `
-              <div class="search-results">${partesFiltrados.length} resultado${partesFiltrados.length !== 1 ? 's' : ''} encontrado${partesFiltrados.length !== 1 ? 's' : ''}</div>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Cliente</th>
-                    <th>Equipo</th>
-                    <th>Progreso</th>
-                    <th>Estado</th>
-                    <th>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${partesFiltrados.map(p => {
-                    const completados = (p.hitos || []).filter(h => h && h.completado).length;
-                    return `
+              <div style="overflow-x: auto;">
+                <table class="table" style="font-size: 12px;">
+                  <thead>
+                    <tr>
+                      <th>Nº Aviso</th>
+                      <th>Marca</th>
+                      <th>Modelo</th>
+                      <th>SAT</th>
+                      <th>F. Aviso</th>
+                      <th>Técnico</th>
+                      <th>Facturado</th>
+                      <th>Coste Total</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${partesFiltrados.map(p => `
                       <tr>
-                        <td><strong>#${(p.id || '').slice(0, 6).toUpperCase()}</strong></td>
-                        <td>${p.cliente || ''}</td>
-                        <td>${p.modelo || ''}</td>
-                        <td><strong>${completados}/6</strong> hitos</td>
-                        <td><span class="status-badge status-${(p.estado || '').toLowerCase().replace(' ', '')}">${p.estado || ''}</span></td>
-                        <td><button class="btn btn-secondary btn-small" onclick="app.verParte('${p.id}')">Abrir</button></td>
+                        <td><strong>${p.n_aviso || '-'}</strong></td>
+                        <td>${p.marca || '-'}</td>
+                        <td>${p.modelo || '-'}</td>
+                        <td>${p.sat || '-'}</td>
+                        <td>${p.f_aviso ? new Date(p.f_aviso).toLocaleDateString('es-ES') : '-'}</td>
+                        <td>${p.tecnico_nombre || '-'}</td>
+                        <td>${p.facturado === 'S' ? '✓' : p.facturado === 'N' ? '✗' : '-'}</td>
+                        <td>${p.coste_total ? (p.coste_total.toFixed(2) + ' €') : '0.00 €'}</td>
+                        <td style="white-space: nowrap;">
+                          <button class="btn btn-secondary btn-small" onclick="app.editarParte('${p.id}')">✏️</button>
+                          <button class="btn btn-secondary btn-small" style="margin-left: 4px;" onclick="app.eliminarParte('${p.id}')">🗑️</button>
+                        </td>
                       </tr>
-                    `;
-                  }).join('')}
-                </tbody>
-              </table>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
             `}
           </div>
         `;
@@ -2415,9 +2493,150 @@
       eliminarTecnico(id) {
         if (!db.tecnicos) db.tecnicos = [];
         if (confirm('¿Estás seguro de que quieres eliminar este técnico?')) {
-          db.tecnicos = db.tecnicos.filter(t => t.id !== id);
+          db.tecnicos = db.technicos.filter(t => t.id !== id);
           this.saveDB();
           this.renderTecnicos();
+        }
+      },
+
+      // ========== FUNCIONES PARA PARTES (25 CAMPOS) ==========
+      newParte() {
+        document.getElementById('input-parte-id').value = '';
+        document.getElementById('input-parte-n-aviso').value = '';
+        document.getElementById('input-parte-f-compra').value = '';
+        document.getElementById('input-parte-comprada-en').value = '';
+        document.getElementById('input-parte-sat').value = '';
+        document.getElementById('input-parte-marca').value = '';
+        document.getElementById('input-parte-modelo').value = '';
+        document.getElementById('input-parte-n-serie-int').value = '';
+        document.getElementById('input-parte-n-serie-ext').value = '';
+        document.getElementById('input-parte-f-aviso').value = '';
+        document.getElementById('input-parte-f-terminac').value = '';
+        document.getElementById('input-parte-dias-transcurr').value = '';
+        document.getElementById('input-parte-tecnico-asignado').value = '';
+        document.getElementById('input-parte-contacto').value = '';
+        document.getElementById('input-parte-direccion').value = '';
+        document.getElementById('input-parte-comentarios').value = '';
+        document.getElementById('input-parte-averia').value = '';
+        document.getElementById('input-parte-doa').value = '';
+        document.getElementById('input-parte-repuesto').value = '';
+        document.getElementById('input-parte-m-obra').value = '';
+        document.getElementById('input-parte-despl-km').value = '';
+        document.getElementById('input-parte-coste-repuesto').value = '';
+        document.getElementById('input-parte-coste-total').value = '';
+        document.getElementById('input-parte-facturado').value = '';
+        document.getElementById('input-parte-motivo').value = '';
+        document.getElementById('input-parte-imp-fact').value = '';
+        document.getElementById('input-parte-fact-sat').value = '';
+
+        this.llenarSelectTecnicos();
+        document.getElementById('modal-parte-title').textContent = 'Nuevo Parte';
+        document.getElementById('modal-parte').classList.add('active');
+      },
+
+      llenarSelectTecnicos() {
+        const select = document.getElementById('input-parte-tecnico-asignado');
+        select.innerHTML = '<option value="">Seleccionar técnico...</option>';
+        (db.tecnicos || []).forEach(t => {
+          const option = document.createElement('option');
+          option.value = t.id;
+          option.textContent = t.nombre;
+          select.appendChild(option);
+        });
+      },
+
+      guardarParte() {
+        if (!db.partes) db.partes = [];
+
+        const id = document.getElementById('input-parte-id').value;
+        const parte = {
+          id: id || this.genId(),
+          n_aviso: document.getElementById('input-parte-n-aviso').value.trim(),
+          f_compra: document.getElementById('input-parte-f-compra').value,
+          comprada_en: document.getElementById('input-parte-comprada-en').value.trim(),
+          sat: document.getElementById('input-parte-sat').value.trim(),
+          marca: document.getElementById('input-parte-marca').value.trim(),
+          modelo: document.getElementById('input-parte-modelo').value.trim(),
+          n_serie_int: document.getElementById('input-parte-n-serie-int').value.trim(),
+          n_serie_ext: document.getElementById('input-parte-n-serie-ext').value.trim(),
+          f_aviso: document.getElementById('input-parte-f-aviso').value,
+          f_terminac: document.getElementById('input-parte-f-terminac').value,
+          dias_transcurr: parseInt(document.getElementById('input-parte-dias-transcurr').value) || 0,
+          tecnico_id: document.getElementById('input-parte-tecnico-asignado').value,
+          tecnico_nombre: document.querySelector('#input-parte-tecnico-asignado option:checked')?.textContent || '',
+          contacto: document.getElementById('input-parte-contacto').value.trim(),
+          direccion: document.getElementById('input-parte-direccion').value.trim(),
+          comentarios: document.getElementById('input-parte-comentarios').value.trim(),
+          averia: document.getElementById('input-parte-averia').value.trim(),
+          doa: document.getElementById('input-parte-doa').value.trim(),
+          repuesto: document.getElementById('input-parte-repuesto').value,
+          m_obra: parseFloat(document.getElementById('input-parte-m-obra').value) || 0,
+          despl_km: parseFloat(document.getElementById('input-parte-despl-km').value) || 0,
+          coste_repuesto: parseFloat(document.getElementById('input-parte-coste-repuesto').value) || 0,
+          coste_total: parseFloat(document.getElementById('input-parte-coste-total').value) || 0,
+          facturado: document.getElementById('input-parte-facturado').value,
+          motivo: document.getElementById('input-parte-motivo').value.trim(),
+          imp_fact: document.getElementById('input-parte-imp-fact').value,
+          fact_sat_recibida: document.getElementById('input-parte-fact-sat').value,
+          fecha_creacion: new Date().toISOString()
+        };
+
+        if (id) {
+          const idx = db.partes.findIndex(p => p.id === id);
+          if (idx >= 0) db.partes[idx] = parte;
+        } else {
+          db.partes.push(parte);
+        }
+
+        this.saveDB();
+        this.closeModal('modal-parte');
+        this.renderPartes();
+      },
+
+      editarParte(id) {
+        if (!db.partes) db.partes = [];
+        const parte = db.partes.find(p => p.id === id);
+        if (!parte) return;
+
+        document.getElementById('input-parte-id').value = parte.id;
+        document.getElementById('input-parte-n-aviso').value = parte.n_aviso || '';
+        document.getElementById('input-parte-f-compra').value = parte.f_compra || '';
+        document.getElementById('input-parte-comprada-en').value = parte.comprada_en || '';
+        document.getElementById('input-parte-sat').value = parte.sat || '';
+        document.getElementById('input-parte-marca').value = parte.marca || '';
+        document.getElementById('input-parte-modelo').value = parte.modelo || '';
+        document.getElementById('input-parte-n-serie-int').value = parte.n_serie_int || '';
+        document.getElementById('input-parte-n-serie-ext').value = parte.n_serie_ext || '';
+        document.getElementById('input-parte-f-aviso').value = parte.f_aviso || '';
+        document.getElementById('input-parte-f-terminac').value = parte.f_terminac || '';
+        document.getElementById('input-parte-dias-transcurr').value = parte.dias_transcurr || 0;
+        document.getElementById('input-parte-tecnico-asignado').value = parte.tecnico_id || '';
+        document.getElementById('input-parte-contacto').value = parte.contacto || '';
+        document.getElementById('input-parte-direccion').value = parte.direccion || '';
+        document.getElementById('input-parte-comentarios').value = parte.comentarios || '';
+        document.getElementById('input-parte-averia').value = parte.averia || '';
+        document.getElementById('input-parte-doa').value = parte.doa || '';
+        document.getElementById('input-parte-repuesto').value = parte.repuesto || '';
+        document.getElementById('input-parte-m-obra').value = parte.m_obra || 0;
+        document.getElementById('input-parte-despl-km').value = parte.despl_km || 0;
+        document.getElementById('input-parte-coste-repuesto').value = parte.coste_repuesto || 0;
+        document.getElementById('input-parte-coste-total').value = parte.coste_total || 0;
+        document.getElementById('input-parte-facturado').value = parte.facturado || '';
+        document.getElementById('input-parte-motivo').value = parte.motivo || '';
+        document.getElementById('input-parte-imp-fact').value = parte.imp_fact || '';
+        document.getElementById('input-parte-fact-sat').value = parte.fact_sat_recibida || '';
+
+        this.llenarSelectTecnicos();
+        document.getElementById('modal-parte-title').textContent = 'Editar Parte';
+        document.getElementById('modal-parte').classList.add('active');
+      },
+
+      eliminarParte(id) {
+        if (!db.partes) db.partes = [];
+        if (confirm('¿Estás seguro?')) {
+          db.partes = db.partes.filter(p => p.id !== id);
+          this.saveDB();
+          this.renderPartes();
         }
       },
 
