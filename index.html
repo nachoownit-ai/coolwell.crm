@@ -1387,21 +1387,6 @@
   </div>
 
   <!-- MODALS -->
-  <div class="modal-overlay" id="modal-new-parte">
-    <div class="modal">
-      <div class="modal-title">Crear Nuevo Parte Técnico</div>
-      <div class="modal-subtitle">Ingresa los datos básicos del trabajo</div>
-      <div class="modal-form">
-        <input type="text" id="input-cliente" placeholder="Nombre del Cliente" autofocus>
-        <input type="text" id="input-modelo" placeholder="Modelo/Descripción del Equipo">
-      </div>
-      <div class="modal-buttons">
-        <button class="btn btn-secondary" onclick="app.closeModal('modal-new-parte')">Cancelar</button>
-        <button class="btn" onclick="app.saveParte()">Crear Parte</button>
-      </div>
-    </div>
-  </div>
-
   <div class="modal-overlay" id="modal-new-servicio">
     <div class="modal">
       <div class="modal-title">Crear Nuevo Servicio</div>
@@ -3765,44 +3750,6 @@ renderServicios(servicioSeleccionado = null) {
           this.verParte(id);
         };
         reader.readAsDataURL(input.files[0]);
-      },
-
-      newParte() {
-        document.getElementById('input-cliente').value = '';
-        document.getElementById('input-modelo').value = '';
-        document.getElementById('modal-new-parte').classList.add('active');
-        document.getElementById('input-cliente').focus();
-      },
-
-      saveParte() {
-        const cliente = document.getElementById('input-cliente').value.trim();
-        const modelo = document.getElementById('input-modelo').value.trim();
-
-        if (!cliente) {
-          alert('Por favor ingresa el nombre del cliente');
-          return;
-        }
-        if (!modelo) {
-          alert('Por favor ingresa el modelo/descripción del equipo');
-          return;
-        }
-
-        const newParte = {
-          id: this.genId(),
-          cliente,
-          modelo,
-          estado: 'Enviado',
-          hitos: Array(6).fill(0).map(() => ({
-            completado: false,
-            data: { fotos: [] }
-          }))
-        };
-        newParte.hitos[5].data.firmas = {};
-
-        db.partes.unshift(newParte);
-        this.saveDB();
-        this.closeModal('modal-new-parte');
-        this.renderDashboard();
       },
 
       newService() {
