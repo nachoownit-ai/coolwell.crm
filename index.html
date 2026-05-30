@@ -1541,7 +1541,62 @@
       </div>
       <div class="modal-buttons">
         <button class="btn btn-secondary" onclick="app.closeModal('modal-tecnico')">Cancelar</button>
+        <button class="btn btn-secondary" id="btn-crear-usuario-tecnico" onclick="app.abrirModalCrearUsuario()" style="display:none;">🔑 Crear Usuario</button>
+        <button class="btn btn-secondary" id="btn-calendario-tecnico" onclick="app.abrirModalCalendario()" style="display:none;">📅 Disponibilidad</button>
         <button class="btn" onclick="app.guardarTecnico()">Guardar Técnico</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREAR USUARIO TÉCNICO -->
+  <div class="modal-overlay" id="modal-crear-usuario-tecnico">
+    <div class="modal">
+      <div class="modal-title">Crear Usuario de Login</div>
+      <div class="modal-subtitle" id="usuario-tecnico-nombre">Para: Técnico</div>
+      <input type="hidden" id="input-usuario-tecnico-id">
+      <div class="modal-form">
+        <input type="text" id="input-usuario-tecnico" placeholder="Usuario (ej: angel)" autofocus required>
+        <input type="password" id="input-password-tecnico" placeholder="Contraseña (ej: 123456)" required>
+        <input type="password" id="input-password-tecnico-confirm" placeholder="Confirmar contraseña" required>
+        <div id="usuario-error" class="login-error" style="margin-top: 8px;"></div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" onclick="app.cerrarModalCrearUsuario()">Cancelar</button>
+        <button class="btn" onclick="app.guardarUsuarioTecnico()">Crear Usuario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CALENDARIO INTELIGENTE -->
+  <div class="modal-overlay" id="modal-calendario">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-title">Calendario de Disponibilidad</div>
+      <div class="modal-subtitle" id="calendario-tecnico-nombre">Técnico: -</div>
+      <input type="hidden" id="input-calendario-tecnico-id">
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <button class="btn btn-secondary btn-small" onclick="app.mesAnterior()">← Mes anterior</button>
+        <div style="font-size: 18px; font-weight: bold;" id="calendario-mes-año">Enero 2024</div>
+        <button class="btn btn-secondary btn-small" onclick="app.mesSiguiente()">Mes siguiente →</button>
+      </div>
+
+      <div id="calendario-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px;">
+        <!-- Días del mes se generan aquí -->
+      </div>
+
+      <div style="margin-bottom: 20px; padding: 12px; background: var(--bg-light); border-radius: 8px;">
+        <div style="font-weight: bold; margin-bottom: 8px;">Leyenda:</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+          <div>🟢 Disponible</div>
+          <div>🔴 Vacaciones</div>
+          <div>🟡 Enfermo</div>
+          <div>⚪ Sin marcar</div>
+        </div>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" onclick="app.cerrarModalCalendario()">Cancelar</button>
+        <button class="btn" onclick="app.guardarCalendario()">Guardar Disponibilidad</button>
       </div>
     </div>
   </div>
@@ -1555,6 +1610,8 @@
       servicios: [],
       repuestos: [],
       tecnicos: [],
+      usuarios_tecnicos: [],
+      disponibilidades: [],
       clientes: [],
       user: { nombre: 'Admin', rol: 'admin' }
     };
@@ -2038,6 +2095,7 @@
         document.getElementById('tecnico-avatar-default').style.display = 'block';
         document.getElementById('input-tecnico-foto-data').value = '';
         document.getElementById('modal-tecnico-title').textContent = 'Nuevo Técnico';
+        document.getElementById('btn-crear-usuario-tecnico').style.display = 'none';
         document.getElementById('modal-tecnico').classList.add('active');
         document.getElementById('input-tecnico-nombre').focus();
       },
@@ -2069,7 +2127,228 @@
         }
 
         document.getElementById('modal-tecnico-title').textContent = 'Editar Técnico';
+        document.getElementById('btn-crear-usuario-tecnico').style.display = 'block';
+        document.getElementById('btn-calendario-tecnico').style.display = 'block';
         document.getElementById('modal-tecnico').classList.add('active');
+      },
+
+      // Funciones para crear usuario de técnico
+      abrirModalCrearUsuario() {
+        const tecnicoId = document.getElementById('input-tecnico-id').value;
+        const tecnicoNombre = document.getElementById('input-tecnico-nombre').value;
+
+        if (!tecnicoNombre) {
+          alert('Primero guarda el técnico');
+          return;
+        }
+
+        document.getElementById('input-usuario-tecnico-id').value = tecnicoId;
+        document.getElementById('usuario-tecnico-nombre').textContent = 'Para: ' + tecnicoNombre;
+        document.getElementById('input-usuario-tecnico').value = '';
+        document.getElementById('input-password-tecnico').value = '';
+        document.getElementById('input-password-tecnico-confirm').value = '';
+        document.getElementById('usuario-error').textContent = '';
+        document.getElementById('modal-crear-usuario-tecnico').classList.add('active');
+      },
+
+      cerrarModalCrearUsuario() {
+        document.getElementById('modal-crear-usuario-tecnico').classList.remove('active');
+      },
+
+      guardarUsuarioTecnico() {
+        const usuario = document.getElementById('input-usuario-tecnico').value.trim();
+        const password = document.getElementById('input-password-tecnico').value;
+        const passwordConfirm = document.getElementById('input-password-tecnico-confirm').value;
+        const errorDiv = document.getElementById('usuario-error');
+
+        if (!usuario) {
+          errorDiv.textContent = 'El usuario es requerido';
+          return;
+        }
+
+        if (password.length < 4) {
+          errorDiv.textContent = 'La contraseña debe tener al menos 4 caracteres';
+          return;
+        }
+
+        if (password !== passwordConfirm) {
+          errorDiv.textContent = 'Las contraseñas no coinciden';
+          return;
+        }
+
+        // Verificar que el usuario no exista
+        const usuarios = loadUsuarios();
+        if (usuarios.find(u => u.usuario === usuario)) {
+          errorDiv.textContent = 'Este usuario ya existe';
+          return;
+        }
+
+        // Guardar usuario
+        usuarios.push({
+          usuario: usuario,
+          password: password,
+          tecnicoId: document.getElementById('input-usuario-tecnico-id').value
+        });
+        saveUsuarios(usuarios);
+
+        alert('✓ Usuario creado: ' + usuario);
+        this.cerrarModalCrearUsuario();
+      },
+
+      // ========== CALENDARIO INTELIGENTE ==========
+      calendarioEstadoActual: {},
+      calendarioMes: new Date().getMonth(),
+      calendarioYear: new Date().getFullYear(),
+
+      abrirModalCalendario() {
+        const tecnicoId = document.getElementById('input-tecnico-id').value;
+        const tecnicoNombre = document.getElementById('input-tecnico-nombre').value;
+
+        if (!tecnicoNombre) {
+          alert('Primero guarda el técnico');
+          return;
+        }
+
+        this.calendarioEstadoActual = {};
+        this.calendarioMes = new Date().getMonth();
+        this.calendarioYear = new Date().getFullYear();
+
+        document.getElementById('input-calendario-tecnico-id').value = tecnicoId;
+        document.getElementById('calendario-tecnico-nombre').textContent = 'Técnico: ' + tecnicoNombre;
+
+        // Cargar disponibilidad guardada
+        if (!db.disponibilidades) db.disponibilidades = [];
+        const disponibilidad = db.disponibilidades.find(d => d.tecnicoId === tecnicoId &&
+          d.mes === this.calendarioMes && d.year === this.calendarioYear);
+        if (disponibilidad) {
+          this.calendarioEstadoActual = {...disponibilidad.dias};
+        }
+
+        this.renderCalendario();
+        document.getElementById('modal-calendario').classList.add('active');
+      },
+
+      cerrarModalCalendario() {
+        document.getElementById('modal-calendario').classList.remove('active');
+      },
+
+      renderCalendario() {
+        const firstDay = new Date(this.calendarioYear, this.calendarioMes, 1).getDay();
+        const daysInMonth = new Date(this.calendarioYear, this.calendarioMes + 1, 0).getDate();
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        document.getElementById('calendario-mes-año').textContent = meses[this.calendarioMes] + ' ' + this.calendarioYear;
+
+        const grid = document.getElementById('calendario-grid');
+        grid.innerHTML = '';
+
+        // Encabezados de días
+        const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        dias.forEach(dia => {
+          const header = document.createElement('div');
+          header.textContent = dia;
+          header.style.cssText = 'font-weight: bold; text-align: center; padding: 8px; background: var(--bg-light); border-radius: 4px;';
+          grid.appendChild(header);
+        });
+
+        // Espacios vacíos al inicio
+        for (let i = 0; i < firstDay; i++) {
+          const empty = document.createElement('div');
+          grid.appendChild(empty);
+        }
+
+        // Días del mes
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dayDiv = document.createElement('div');
+          const dayKey = day.toString();
+          const estado = this.calendarioEstadoActual[dayKey] || 'sin-marcar';
+
+          let bgColor = '#f0f0f0';
+          let emoji = '⚪';
+          if (estado === 'disponible') { bgColor = '#4CAF50'; emoji = '🟢'; }
+          else if (estado === 'vacaciones') { bgColor = '#f44336'; emoji = '🔴'; }
+          else if (estado === 'enfermo') { bgColor = '#FFC107'; emoji = '🟡'; }
+
+          dayDiv.style.cssText = `
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            background: ${bgColor};
+            color: ${estado === 'sin-marcar' ? '#333' : '#fff'};
+            font-weight: bold;
+            transition: all 0.2s;
+          `;
+          dayDiv.innerHTML = `<div style="font-size: 10px;">${day}</div><div style="font-size: 14px; margin-top: 2px;">${emoji}</div>`;
+
+          dayDiv.addEventListener('click', () => {
+            this.ciclarEstadoDia(dayKey);
+          });
+
+          dayDiv.addEventListener('mouseenter', () => {
+            dayDiv.style.transform = 'scale(1.1)';
+          });
+
+          dayDiv.addEventListener('mouseleave', () => {
+            dayDiv.style.transform = 'scale(1)';
+          });
+
+          grid.appendChild(dayDiv);
+        }
+      },
+
+      ciclarEstadoDia(day) {
+        const estados = ['sin-marcar', 'disponible', 'vacaciones', 'enfermo'];
+        const estadoActual = this.calendarioEstadoActual[day] || 'sin-marcar';
+        const indiceActual = estados.indexOf(estadoActual);
+        const siguienteEstado = estados[(indiceActual + 1) % estados.length];
+
+        this.calendarioEstadoActual[day] = siguienteEstado;
+        this.renderCalendario();
+      },
+
+      mesAnterior() {
+        this.calendarioMes--;
+        if (this.calendarioMes < 0) {
+          this.calendarioMes = 11;
+          this.calendarioYear--;
+        }
+        this.renderCalendario();
+      },
+
+      mesSiguiente() {
+        this.calendarioMes++;
+        if (this.calendarioMes > 11) {
+          this.calendarioMes = 0;
+          this.calendarioYear++;
+        }
+        this.renderCalendario();
+      },
+
+      guardarCalendario() {
+        if (!db.disponibilidades) db.disponibilidades = [];
+
+        const tecnicoId = document.getElementById('input-calendario-tecnico-id').value;
+        const indice = db.disponibilidades.findIndex(d => d.tecnicoId === tecnicoId &&
+          d.mes === this.calendarioMes && d.year === this.calendarioYear);
+
+        const registro = {
+          tecnicoId: tecnicoId,
+          mes: this.calendarioMes,
+          year: this.calendarioYear,
+          dias: {...this.calendarioEstadoActual}
+        };
+
+        if (indice >= 0) {
+          db.disponibilidades[indice] = registro;
+        } else {
+          db.disponibilidades.push(registro);
+        }
+
+        this.saveDB();
+        alert('✓ Disponibilidad guardada');
+        this.cerrarModalCalendario();
       },
 
       guardarTecnico() {
