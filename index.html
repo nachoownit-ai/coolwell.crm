@@ -3895,129 +3895,200 @@ renderServicios(servicioSeleccionado = null) {
       },
 
       demoData() {
-        // Demo servicios
-        if (db.servicios.length === 0) {
-          const servicios = [
+        // Demo técnicos
+        if (db.tecnicos.length === 0) {
+          const tecnicosDemo = [
             {
               id: this.genId(),
-              nombre: 'Mantenimiento Preventivo',
-              categoria: 'Mantenimiento',
-              descripcion: 'Limpieza y revisión completa del sistema de aire acondicionado',
-              precio: '150',
-              duracion: '2 horas',
-              historial: []
+              nombre: 'Ángel Rodríguez',
+              email: 'angel@coolwell.com',
+              telefono: '691234567',
+              especialidad: 'Reparación de compresores',
+              fecha: '2023-03-15',
+              tarifa: '45.00',
+              disponibilidad: 'Disponible',
+              certificaciones: 'Certificado Daikin, Certificado Fujitsu',
+              notas: 'Especialista en equipos comerciales',
+              foto: null
             },
             {
               id: this.genId(),
-              nombre: 'Reparación de Compresor',
-              categoria: 'Reparación',
-              descripcion: 'Diagnóstico y reparación del compresor defectuoso',
-              precio: '450',
-              duracion: '4 horas',
-              historial: []
+              nombre: 'Miguel Santos',
+              email: 'miguel@coolwell.com',
+              telefono: '692345678',
+              especialidad: 'Instalación',
+              fecha: '2023-06-20',
+              tarifa: '50.00',
+              disponibilidad: 'Disponible',
+              certificaciones: 'Instalador Certificado, Técnico Frigorista',
+              notas: 'Especialista en instalaciones residenciales',
+              foto: null
             },
             {
               id: this.genId(),
-              nombre: 'Recarga de Refrigerante',
-              categoria: 'Mantenimiento',
-              descripcion: 'Recarga completa de refrigerante R410A',
-              precio: '200',
-              duracion: '1.5 horas',
-              historial: []
-            },
-            {
-              id: this.genId(),
-              nombre: 'Instalación Completa',
-              categoria: 'Instalación',
-              descripcion: 'Instalación de nuevas unidades de aire acondicionado',
-              precio: '800',
-              duracion: '8 horas',
-              historial: []
+              nombre: 'Carlos López',
+              email: 'carlos@coolwell.com',
+              telefono: '693456789',
+              especialidad: 'Mantenimiento preventivo',
+              fecha: '2024-01-10',
+              tarifa: '40.00',
+              disponibilidad: 'En asignación',
+              certificaciones: 'Técnico Especializado en Mantenimiento',
+              notas: 'Experto en servicios de mantenimiento',
+              foto: null
             }
           ];
-          db.servicios.push(...servicios);
+          db.tecnicos.push(...tecnicosDemo);
         }
 
-        // Demo repuestos
-        if (db.repuestos.length === 0) {
-          const repuestos = [
+        // Demo partes con 25 campos
+        if (db.partes.length === 0) {
+          const partesDemo = [
             {
               id: this.genId(),
-              codigo: 'COMP-001',
-              nombre: 'Compresor Daikin',
-              descripcion: 'Compresor hermético para aires Daikin series FTXZ',
-              precio: '350',
-              stock: 5,
-              historial: []
+              n_aviso: '7526-AL',
+              f_compra: '2023-06-06',
+              comprada_en: 'CENTROSUR VALENCIA',
+              sat: 'JÓSBALSA',
+              marca: 'ALMISÓN',
+              modelo: 'ALM18A21R32',
+              n_serie_int: 'SN-001-2023',
+              n_serie_ext: 'EXT-001-2023',
+              f_aviso: '2026-03-16',
+              f_terminac: '2026-03-18',
+              dias_transcurr: 2,
+              tecnico_id: db.tecnicos[0]?.id || '',
+              tecnico_nombre: db.tecnicos[0]?.nombre || 'Ángel Rodríguez',
+              contacto: 'RAUL ESCOBAR 691420071',
+              direccion: 'C/ CASTELLON Nº 34, LLIRIA 46160 VALENCIA',
+              comentarios: 'Cliente requiere servicio urgente. Equipo de uso comercial.',
+              averia: 'El equipo funciona, le sube la presión hacia arriba y se para. No sale código de error y el instalador va a verla y no ve nada raro.',
+              doa: '',
+              repuesto: 'S',
+              m_obra: 25.00,
+              despl_km: 62.50,
+              coste_repuesto: 0.00,
+              coste_total: 50.00,
+              facturado: 'N',
+              motivo: 'ORD',
+              imp_fact: 'N',
+              fact_sat_recibida: 'N',
+              fecha_creacion: new Date().toISOString()
             },
             {
               id: this.genId(),
-              codigo: 'FAN-005',
-              nombre: 'Motor de Ventilador',
-              descripcion: 'Motor ventilador exterior 1HP',
-              precio: '120',
-              stock: 8,
-              historial: []
+              n_aviso: '8126-AR',
+              f_compra: '2025-06-27',
+              comprada_en: 'ELYSE',
+              sat: 'HARTI ELECTROCOOL',
+              marca: 'ARTROM',
+              modelo: 'AMR 15',
+              n_serie_int: 'SN-002-2025',
+              n_serie_ext: 'EXT-002-2025',
+              f_aviso: '2026-03-27',
+              f_terminac: '2026-03-29',
+              dias_transcurr: 2,
+              tecnico_id: db.tecnicos[1]?.id || '',
+              tecnico_nombre: db.tecnicos[1]?.nombre || 'Miguel Santos',
+              contacto: 'FELIX CRUZA 637786979',
+              direccion: 'C/ ALGOR, 21, VILLA DE DON FADRIQUE, 4',
+              comentarios: 'Instalación en zona de difícil acceso. Requiere desplazamiento largo.',
+              averia: 'No funciona la bomba de calor',
+              doa: '',
+              repuesto: 'N',
+              m_obra: 25.00,
+              despl_km: 432.00,
+              coste_repuesto: 150.00,
+              coste_total: 197.80,
+              facturado: 'N',
+              motivo: 'ORD',
+              imp_fact: 'N',
+              fact_sat_recibida: 'N',
+              fecha_creacion: new Date().toISOString()
             },
             {
               id: this.genId(),
-              codigo: 'COND-003',
-              nombre: 'Condensador',
-              descripcion: 'Bobina condensadora de cobre',
-              precio: '200',
-              stock: 3,
-              historial: []
-            },
-            {
-              id: this.genId(),
-              codigo: 'REF-R410A',
-              nombre: 'Refrigerante R410A',
-              descripcion: 'Cilindro de refrigerante R410A 10kg',
-              precio: '85',
-              stock: 12,
-              historial: []
-            },
-            {
-              id: this.genId(),
-              codigo: 'TERM-002',
-              nombre: 'Termostato Digital',
-              descripcion: 'Termostato programable inalámbrico',
-              precio: '95',
-              stock: 15,
-              historial: []
+              n_aviso: '9226-KR',
+              f_compra: '2024-05-16',
+              comprada_en: 'MUEBLES ROS',
+              sat: 'HARTI ELECTROCOOL',
+              marca: 'KROMS',
+              modelo: 'KAC 35 WI',
+              n_serie_int: 'SN-003-2024',
+              n_serie_ext: 'EXT-003-2024',
+              f_aviso: '2026-03-30',
+              f_terminac: '2026-04-01',
+              dias_transcurr: 2,
+              tecnico_id: db.tecnicos[2]?.id || '',
+              tecnico_nombre: db.tecnicos[2]?.nombre || 'Carlos López',
+              contacto: 'MIGUEL ANGEL ROS 619934067',
+              direccion: 'C/ CORREDERA, 14, 1º C, VALDEPEÑAS 1331',
+              comentarios: 'Mantenimiento preventivo mensual. Cliente satisfecho con servicio.',
+              averia: 'Revisión preventiva y limpieza general',
+              doa: '',
+              repuesto: 'N',
+              m_obra: 25.00,
+              despl_km: 45.00,
+              coste_repuesto: 0.00,
+              coste_total: 52.50,
+              facturado: 'S',
+              motivo: 'ORD',
+              imp_fact: 'S',
+              fact_sat_recibida: 'S',
+              fecha_creacion: new Date().toISOString()
             }
           ];
-          db.repuestos.push(...repuestos);
+          db.partes.push(...partesDemo);
         }
 
-        // Demo parte
-        const nuevoParte = {
-          id: this.genId(),
-          cliente: 'Juan García López',
-          modelo: 'Daikin FTXZ35K',
-          estado: 'En curso',
-          hitos: [
-            { completado: true, data: { datetime: '2026-05-23T14:30', fotos: [] } },
-            { completado: true, data: { fecha: '2026-05-24', hora: '09:00', fotos: [] } },
-            { completado: true, data: { garantia: 'si', notas: 'Equipo dentro de garantía', fotos: [] } },
-            { completado: true, data: { diag: 'Compresor defectuoso detectado', fotos: [] } },
-            { completado: false, data: { estado: '', descripcion: '', fotos: [] } },
-            { completado: false, data: { trabajos: '', fotos: [], firmas: {} } }
-          ]
-        };
-        db.partes.unshift(nuevoParte);
+        // Demo disponibilidades (calendario inteligente)
+        if (db.disponibilidades.length === 0 && db.tecnicos.length > 0) {
+          const hoy = new Date();
+          const mesActual = hoy.getMonth();
+          const yearActual = hoy.getFullYear();
 
-        // Registrar uso de servicio
-        if (db.servicios.length > 1) {
-          this.registrarUsoServicio(db.servicios[1].id, 'Juan García López', 'Daikin FTXZ35K', 'Técnico Admin');
-        }
-
-        // Registrar uso de repuesto
-        if (db.repuestos.length > 0) {
-          this.registrarUsoRepuesto(db.repuestos[0].id, nuevoParte.id, 'Juan García López', 1);
+          const disponibilidadesDemo = db.tecnicos.map(t => ({
+            tecnicoId: t.id,
+            mes: mesActual,
+            year: yearActual,
+            dias: {
+              '1': 'disponible',
+              '2': 'disponible',
+              '3': 'disponible',
+              '4': 'disponible',
+              '5': 'disponible',
+              '6': 'vacaciones',
+              '7': 'vacaciones',
+              '8': 'disponible',
+              '9': 'disponible',
+              '10': 'disponible',
+              '11': 'disponible',
+              '12': 'enfermo',
+              '13': 'enfermo',
+              '14': 'disponible',
+              '15': 'disponible',
+              '16': 'disponible',
+              '17': 'disponible',
+              '18': 'disponible',
+              '19': 'disponible',
+              '20': 'disponible',
+              '21': 'disponible',
+              '22': 'disponible',
+              '23': 'disponible',
+              '24': 'disponible',
+              '25': 'disponible',
+              '26': 'disponible',
+              '27': 'disponible',
+              '28': 'disponible',
+              '29': 'disponible',
+              '30': 'disponible'
+            }
+          }));
+          db.disponibilidades.push(...disponibilidadesDemo);
         }
 
         this.saveDB();
+        alert('✓ Datos de demostración cargados exitosamente!');
         this.renderDashboard();
       },
 
