@@ -1364,12 +1364,12 @@
         <div class="sidebar-section">
           <div class="sidebar-title">Navegación</div>
           <div class="nav-item active" onclick="app.go('dashboard')">Dashboard</div>
-          <div class="nav-item" onclick="app.go('partes')">Partes Técnicos</div>
-          <div class="nav-item" onclick="app.go('tecnicos')">Técnicos</div>
-          <div class="nav-item" onclick="app.go('clientes')">AGENTES IA</div>
-          <div class="nav-item" onclick="app.go('repuestos')">Repuestos</div>
+          <div class="nav-item" onclick="app.go('partes')" data-admin="true">Partes Técnicos</div>
+          <div class="nav-item" onclick="app.go('tecnicos')" data-admin="true">Técnicos</div>
+          <div class="nav-item" onclick="app.go('clientes')" data-admin="true">AGENTES IA</div>
+          <div class="nav-item" onclick="app.go('repuestos')" data-admin="true">Repuestos</div>
           <div class="nav-item" onclick="app.go('calendario')">Calendario</div>
-          <div class="nav-item" onclick="app.go('reportes')">Reportes</div>
+          <div class="nav-item" onclick="app.go('reportes')" data-admin="true">Reportes</div>
         </div>
       </nav>
 
@@ -1799,6 +1799,13 @@
         document.getElementById('user-name').textContent = currentUser || 'Usuario';
         document.getElementById('user-role').textContent = isAdmin ? 'Administrador' : 'Técnico';
 
+        // Ocultar opciones de admin si el usuario es técnico
+        if (!isAdmin) {
+          document.querySelectorAll('[data-admin="true"]').forEach(item => {
+            item.style.display = 'none';
+          });
+        }
+
         this.loadDB();
         this.go('dashboard');
       },
@@ -1850,87 +1857,208 @@
       },
 
       renderDashboard() {
+        if (isAdmin) {
+          this.renderDashboardAdmin();
+        } else {
+          this.renderDashboardTecnico();
+        }
+      },
+
+      renderDashboardAdmin() {
         const partes = db.partes || [];
         const total = partes.length;
-        const enviados = partes.filter(p => p && p.estado === 'Enviado').length;
-        const agendados = partes.filter(p => p && p.estado === 'Agendado').length;
-        const encurso = partes.filter(p => p && p.estado === 'En curso').length;
-        const finalizados = partes.filter(p => p && p.estado === 'Finalizado').length;
+        const facturados = partes.filter(p => p.facturado === 'S').length;
+        const pendientes = partes.filter(p => p.facturado !== 'S').length;
+        const costeTotal = partes.reduce((sum, p) => sum + (parseFloat(p.coste_total) || 0), 0);
+
+        // Estadísticas por técnico
+        const tecnicos = db.tecnicos || [];
+        const statsPorTecnico = tecnicos.map(t => {
+          const partesTec = partes.filter(p => p.tecnico_id === t.id);
+          return {
+            nombre: t.nombre,
+            total: partesTec.length,
+            facturados: partesTec.filter(p => p.facturado === 'S').length,
+            coste: partesTec.reduce((sum, p) => sum + (parseFloat(p.coste_total) || 0), 0)
+          };
+        }).filter(s => s.total > 0).sort((a, b) => b.total - a.total);
 
         let html = `
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-label">Total</div>
+              <div class="stat-label">Total Partes</div>
               <div class="stat-value">${total}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Enviados</div>
-              <div class="stat-value" style="color: var(--accent);">${enviados}</div>
+              <div class="stat-label">Facturados</div>
+              <div class="stat-value" style="color: #4CAF50;">${facturados}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Agendados</div>
-              <div class="stat-value" style="color: var(--warning);">${agendados}</div>
+              <div class="stat-label">Pendientes</div>
+              <div class="stat-value" style="color: #FF9800;">${pendientes}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">En Curso</div>
-              <div class="stat-value" style="color: var(--warning);">${encurso}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Finalizados</div>
-              <div class="stat-value" style="color: var(--success);">${finalizados}</div>
+              <div class="stat-label">Coste Total</div>
+              <div class="stat-value" style="color: var(--accent);">${costeTotal.toFixed(2)}€</div>
             </div>
           </div>
 
           <div class="card">
-            <div class="card-title">Acciones</div>
+            <div class="card-title">Acciones Administrativas</div>
             <button class="btn" onclick="app.newParte()">+ Crear Nuevo Parte</button>
-            ${total === 0 ? `<button class="btn btn-secondary" style="margin-left: 12px;" onclick="app.demoData()">Cargar Datos Demo</button>` : ''}
+            <button class="btn btn-secondary" style="margin-left: 12px;" onclick="app.go('partes')">📋 Ver todos los Partes</button>
           </div>
-        `;
 
-        if (total > 0) {
-          html += `
+          ${statsPorTecnico.length > 0 ? `
             <div class="card">
-              <div class="card-title">Últimas Actualizaciones</div>
+              <div class="card-title">Estadísticas por Técnico</div>
               <table class="table">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Cliente</th>
-                    <th>Equipo</th>
-                    <th>Estado</th>
-                    <th>Acción</th>
+                    <th>Técnico</th>
+                    <th>Total Partes</th>
+                    <th>Facturados</th>
+                    <th>Coste Total</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${partes.slice(0, 10).map(p => `
+                  ${statsPorTecnico.map(s => `
                     <tr>
-                      <td><strong>#${(p.id || '').slice(0, 6).toUpperCase()}</strong></td>
-                      <td>${p.cliente || 'N/A'}</td>
-                      <td>${p.modelo || 'N/A'}</td>
-                      <td><span class="status-badge status-${(p.estado || 'pendiente').toLowerCase().replace(' ', '')}">${p.estado || 'Pendiente'}</span></td>
-                      <td><button class="btn btn-secondary btn-small" onclick="app.verParte('${p.id}')">Ver Detalles</button></td>
+                      <td><strong>${s.nombre}</strong></td>
+                      <td>${s.total}</td>
+                      <td><span style="color: #4CAF50;">${s.facturados}</span></td>
+                      <td>${s.coste.toFixed(2)}€</td>
                     </tr>
                   `).join('')}
                 </tbody>
               </table>
             </div>
-          `;
-        } else {
-          html += `
+          ` : ''}
+
+          ${total > 0 ? `
+            <div class="card">
+              <div class="card-title">Últimas Partes Creadas</div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nº Aviso</th>
+                    <th>Marca / Modelo</th>
+                    <th>Técnico</th>
+                    <th>F. Aviso</th>
+                    <th>Coste</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${partes.slice(-10).reverse().map(p => `
+                    <tr>
+                      <td><strong>${p.n_aviso || '-'}</strong></td>
+                      <td>${p.marca || ''} ${p.modelo || ''}</td>
+                      <td>${p.tecnico_nombre || '-'}</td>
+                      <td>${p.f_aviso ? new Date(p.f_aviso).toLocaleDateString('es-ES') : '-'}</td>
+                      <td>${(parseFloat(p.coste_total) || 0).toFixed(2)}€</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : `
             <div class="card" style="text-align: center; padding: 40px;">
               <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
               <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No hay partes registrados</div>
-              <div style="color: var(--text-light); margin-bottom: 20px;">Comienza creando tu primer parte técnico o cargando datos de demostración</div>
+              <div style="color: var(--text-light); margin-bottom: 20px;">Comienza creando tu primer parte técnico desde el botón de arriba</div>
             </div>
-          `;
-        }
+          `}
+        `;
+
+        document.getElementById('page-body').innerHTML = html;
+      },
+
+      renderDashboardTecnico() {
+        const partes = db.partes || [];
+        const misTecnicoId = db.tecnicos?.find(t => t.nombre === currentUser)?.id || '';
+        const misPartes = partes.filter(p => p.tecnico_id === misTecnicoId);
+        const facturados = misPartes.filter(p => p.facturado === 'S').length;
+        const pendientes = misPartes.filter(p => p.facturado !== 'S').length;
+        const costeTotal = misPartes.reduce((sum, p) => sum + (parseFloat(p.coste_total) || 0), 0);
+
+        let html = `
+          <div style="padding: 12px; background: var(--bg-light); border-radius: 8px; margin-bottom: 20px;">
+            <div style="font-size: 18px; font-weight: bold;">Bienvenido, ${currentUser}</div>
+            <div style="color: var(--text-light);">Panel de técnico - Visualiza tus partes y disponibilidad</div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Mis Partes</div>
+              <div class="stat-value">${misPartes.length}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Facturados</div>
+              <div class="stat-value" style="color: #4CAF50;">${facturados}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Pendientes</div>
+              <div class="stat-value" style="color: #FF9800;">${pendientes}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Coste Total</div>
+              <div class="stat-value" style="color: var(--accent);">${costeTotal.toFixed(2)}€</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Acciones</div>
+            <button class="btn btn-secondary" onclick="app.go('partes')">📋 Ver todos mis Partes</button>
+          </div>
+
+          ${misPartes.length > 0 ? `
+            <div class="card">
+              <div class="card-title">Mis Partes Recientes</div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nº Aviso</th>
+                    <th>Marca / Modelo</th>
+                    <th>F. Aviso</th>
+                    <th>Facturado</th>
+                    <th>Coste</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${misPartes.slice(-5).reverse().map(p => `
+                    <tr>
+                      <td><strong>${p.n_aviso || '-'}</strong></td>
+                      <td>${p.marca || ''} ${p.modelo || ''}</td>
+                      <td>${p.f_aviso ? new Date(p.f_aviso).toLocaleDateString('es-ES') : '-'}</td>
+                      <td>${p.facturado === 'S' ? '✓' : p.facturado === 'N' ? '✗' : '-'}</td>
+                      <td>${(parseFloat(p.coste_total) || 0).toFixed(2)}€</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : `
+            <div class="card" style="text-align: center; padding: 40px;">
+              <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+              <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No tienes partes asignados</div>
+              <div style="color: var(--text-light); margin-bottom: 20px;">Cuando Luis te asigne un parte, aparecerá aquí</div>
+            </div>
+          `}
+        `;
 
         document.getElementById('page-body').innerHTML = html;
       },
 
       renderPartes(filtro = '') {
-        let partesFiltrados = db.partes || [];
+        let partes = db.partes || [];
+
+        // Si es técnico, filtrar solo sus partes
+        if (!isAdmin) {
+          const misTecnicoId = db.tecnicos?.find(t => t.nombre === currentUser)?.id || '';
+          partes = partes.filter(p => p.tecnico_id === misTecnicoId);
+        }
+
+        let partesFiltrados = partes;
 
         // Filtrar por búsqueda
         if (filtro && filtro.trim()) {
@@ -1947,12 +2075,12 @@
         let html = `
           <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-              <div class="card-title" style="margin-bottom: 0;">Gestión de Partes (${partesFiltrados.length})</div>
-              <button class="btn" onclick="app.newParte()">+ Nuevo Parte</button>
+              <div class="card-title" style="margin-bottom: 0;">${isAdmin ? 'Gestión de Partes' : 'Mis Partes'} (${partesFiltrados.length})</div>
+              ${isAdmin ? '<button class="btn" onclick="app.newParte()">+ Nuevo Parte</button>' : ''}
             </div>
 
             <div class="search-bar" style="margin-bottom: 20px;">
-              <input type="text" class="search-input" id="search-partes" placeholder="Buscar por nº aviso, marca, modelo, técnico..."
+              <input type="text" class="search-input" id="search-partes" placeholder="Buscar por nº aviso, marca, modelo${isAdmin ? ', técnico' : ''}..."
                 onkeyup="app.renderPartes(this.value)">
             </div>
 
@@ -1991,8 +2119,10 @@
                         <td>${p.facturado === 'S' ? '✓' : p.facturado === 'N' ? '✗' : '-'}</td>
                         <td>${p.coste_total ? (p.coste_total.toFixed(2) + ' €') : '0.00 €'}</td>
                         <td style="white-space: nowrap;">
-                          <button class="btn btn-secondary btn-small" onclick="app.editarParte('${p.id}')">✏️</button>
-                          <button class="btn btn-secondary btn-small" style="margin-left: 4px;" onclick="app.eliminarParte('${p.id}')">🗑️</button>
+                          ${isAdmin ? `
+                            <button class="btn btn-secondary btn-small" onclick="app.editarParte('${p.id}')">✏️</button>
+                            <button class="btn btn-secondary btn-small" style="margin-left: 4px;" onclick="app.eliminarParte('${p.id}')">🗑️</button>
+                          ` : '<span style="color: var(--text-light);">Ver</span>'}
                         </td>
                       </tr>
                     `).join('')}
