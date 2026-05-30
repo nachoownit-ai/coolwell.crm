@@ -36,6 +36,96 @@
       overflow: hidden;
     }
 
+    /* LOGIN SCREEN */
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary) 0%, #0f5a3b 100%);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10000;
+    }
+
+    .login-box {
+      background: white;
+      padding: 48px;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-box h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .login-box p {
+      font-size: 14px;
+      color: var(--text-light);
+      margin-bottom: 32px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .login-form input {
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Sora', sans-serif;
+      transition: border-color 0.2s;
+    }
+
+    .login-form input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(28, 125, 79, 0.1);
+    }
+
+    .login-form button {
+      padding: 12px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 8px;
+    }
+
+    .login-form button:hover {
+      background: #0f5a3b;
+    }
+
+    .login-form button:active {
+      transform: scale(0.98);
+    }
+
+    .login-error {
+      color: #DC2626;
+      font-size: 13px;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* HIDE APP WHEN NOT LOGGED IN */
+    .app-hidden {
+      display: none !important;
+    }
+
     .shell {
       display: flex;
       height: 100vh;
@@ -1223,7 +1313,34 @@
   </style>
 </head>
 <body>
-  <div class="shell">
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="login-container">
+    <div class="login-box">
+      <h1>COOLWELL</h1>
+      <p>Gestión de Partes Técnicos</p>
+
+      <form class="login-form" onsubmit="handleAppLogin(event)">
+        <input
+          type="text"
+          id="login-usuario"
+          placeholder="Usuario"
+          required
+          autofocus
+        >
+        <input
+          type="password"
+          id="login-password"
+          placeholder="Contraseña"
+          required
+        >
+        <button type="submit">Iniciar Sesión</button>
+        <div id="login-error" class="login-error"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP (hidden until login) -->
+  <div class="shell app-hidden" id="app-shell">
     <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-left">
@@ -1236,6 +1353,7 @@
           <span id="user-name">Admin</span>
           <span class="user-role" id="user-role">Administrador</span>
         </div>
+        <button class="btn btn-secondary btn-small" onclick="logout()" style="padding: 6px 14px; font-size: 12px;">Salir</button>
       </div>
     </div>
 
@@ -1441,8 +1559,97 @@
       user: { nombre: 'Admin', rol: 'admin' }
     };
 
+    // ========== SISTEMA DE AUTENTICACIÓN ==========
+    let currentUser = null;
+    let isAdmin = false;
+
+    function initAuth() {
+      const savedSession = localStorage.getItem('coolwell_session');
+      if (savedSession) {
+        try {
+          const session = JSON.parse(savedSession);
+          if (session.usuario && session.rol) {
+            currentUser = session.usuario;
+            isAdmin = session.rol === 'admin';
+            showApp();
+            return;
+          }
+        } catch(e) {}
+      }
+      showLogin();
+    }
+
+    function showLogin() {
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('app-shell').classList.add('app-hidden');
+    }
+
+    function showApp() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-shell').classList.remove('app-hidden');
+    }
+
+    function handleAppLogin(event) {
+      event.preventDefault();
+      const usuario = document.getElementById('login-usuario').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const errorDiv = document.getElementById('login-error');
+
+      if (usuario === 'luis' && password === 'luis123') {
+        // Admin login
+        currentUser = 'luis';
+        isAdmin = true;
+        localStorage.setItem('coolwell_session', JSON.stringify({
+          usuario: 'luis',
+          rol: 'admin'
+        }));
+        showApp();
+        app.init();
+      } else {
+        // Check if technician exists
+        const usuarios = loadUsuarios();
+        const tech = usuarios.find(u => u.usuario === usuario && u.password === password);
+        if (tech) {
+          currentUser = usuario;
+          isAdmin = false;
+          localStorage.setItem('coolwell_session', JSON.stringify({
+            usuario: usuario,
+            rol: 'tecnico'
+          }));
+          showApp();
+          app.init();
+        } else {
+          errorDiv.textContent = 'Usuario o contraseña incorrectos';
+          setTimeout(() => { errorDiv.textContent = ''; }, 3000);
+        }
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('coolwell_session');
+      currentUser = null;
+      isAdmin = false;
+      document.getElementById('login-usuario').value = '';
+      document.getElementById('login-password').value = '';
+      initAuth();
+    }
+
+    function loadUsuarios() {
+      const data = localStorage.getItem('coolwell_usuarios');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function saveUsuarios(usuarios) {
+      localStorage.setItem('coolwell_usuarios', JSON.stringify(usuarios));
+    }
+
+    // ========== OBJETO APP ==========
     const app = {
       init() {
+        // Update user display
+        document.getElementById('user-name').textContent = currentUser || 'Usuario';
+        document.getElementById('user-role').textContent = isAdmin ? 'Administrador' : 'Técnico';
+
         this.loadDB();
         this.go('dashboard');
       },
@@ -4932,7 +5139,7 @@ renderServicios(servicioSeleccionado = null) {
       }
     };
 
-    document.addEventListener('DOMContentLoaded', () => app.init());
+    document.addEventListener('DOMContentLoaded', () => initAuth());
   </script>
 </body>
 </html>
